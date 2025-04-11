@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model contents {
+  id                 Int  @id @default(autoincrement())
+  category_id        Int
+  image_title_id     Int?
+  image_thumbnail_id Int?
+  created_by         Int
+  updated_by         Int?
+
+  seo_title            String?   @db.VarChar(60)
+  seo_description      String?   @db.Text
+  seo_keywords         String?   @db.VarChar(255)
+  seo_canonical_url    String?   @db.VarChar(255)
+  created_at           DateTime  @default(now()) @db.DateTime(0)
+  updated_at           DateTime? @db.DateTime(0)
+  description          String?   @db.Text
+  header_thumbnail     String?   @db.VarChar(100)
+  sub_header_thumbnail String?   @db.Text
+  status               String?   @default("draft") @db.VarChar(50)
+  deleted_at           DateTime? @db.DateTime(0)
+
+  category   category @relation(fields: [category_id], references: [id], name: "CategoryContents")
+  imageTitle images?  @relation(name: "TitleImage", fields: [image_title_id], references: [id])
+  imageThumb images?  @relation(name: "ThumbnailImage", fields: [image_thumbnail_id], references: [id])
+  createdBy  users    @relation(name: "CreatedBy", fields: [created_by], references: [id])
+  updatedBy  users?   @relation(name: "UpdatedBy", fields: [updated_by], references: [id])
+}
+
+model images {
+  id         Int       @id @default(autoincrement())
+  file_name  String    @db.VarChar(255)
+  file_path  String    @db.VarChar(255)
+  alt_text   String?   @db.Text
+  title      String?   @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+
+  // Reverse relations
+  contentsTitle contents[] @relation(name: "TitleImage")
+  contentsThumb contents[] @relation(name: "ThumbnailImage")
+}
+
+model users {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique(map: "username") @db.VarChar(50)
+  password   String    @db.VarChar(255)
+  email      String?   @unique(map: "email") @db.VarChar(255)
+  role       String?   @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+
+  // 🔁 ความสัมพันธ์ย้อนกลับกับ contents
+  contentsCreated contents[] @relation(name: "CreatedBy")
+  contentsUpdated contents[] @relation(name: "UpdatedBy")
+}
+
+model category {
+  id               Int    @id @default(autoincrement())
+  category_name_en String @db.VarChar(50)
+  category_name_th String @db.VarChar(50)
+  category_name_zh String @db.VarChar(50)
+
+  // Define the reverse relation to `contents`
+  contents contents[] @relation(name: "CategoryContents")
+}
+
+model cookie_consent {
+  id            Int       @id @default(autoincrement())
+  user_uuid     String    @db.VarChar(50)
+  ip_address    String    @db.VarChar(255)
+  user_agent    String    @db.Text
+  consent_given Boolean   @default(false)
+  consent_date  DateTime? @default(now()) @db.DateTime(0)
+}
+
+model count_preregister {
+  count_id     Int @id @default(autoincrement())
+  count_number Int
+}
+
+model preregister_email {
+  id    Int    @id @default(autoincrement())
+  email String @db.VarChar(255)
+}
+
+model preregister_tokens {
+  id         Int      @id @default(autoincrement())
+  email      String   @db.VarChar(255)
+  token      String   @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model seo_web {
+  id                Int       @id @default(autoincrement())
+  seo_title         String?   @db.VarChar(60)
+  seo_description   String?   @db.VarChar(255)
+  seo_keywords      String?   @db.VarChar(255)
+  seo_canonical_url String?   @db.VarChar(255)
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+  updated_at        DateTime  @default(now()) @db.Timestamp(0)
+}
